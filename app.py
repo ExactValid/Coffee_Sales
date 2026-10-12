@@ -13,7 +13,7 @@ from coffee_data import (
 
 TEAM_NAME = "Coffee Operations Team"  # Replace with your team's actual name before submission.
 DATA_PATH = Path(__file__).resolve().parent / "Coffee Shop Sales.csv"
-TEAL, INK, MUTED = "#247266", "#252E2B", "#737A75"
+TEAL = "#247266"
 
 st.set_page_config(page_title="Coffee Store Planning", page_icon="☕", layout="wide")
 st.markdown("""
@@ -22,8 +22,6 @@ st.markdown("""
  h1 { font-size: 2rem !important; line-height: 1.2 !important; }
  h2, h3 { font-size: 1.25rem !important; }
  [data-testid="stMetricValue"] { font-variant-numeric: tabular-nums; font-size: 1.85rem; }
- [data-testid="stMetric"] { background: #FFFFFF; border-color: #D8DDD7; }
- [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p { color: #59635D; }
  button:focus-visible, input:focus-visible { outline: 2px solid #247266; outline-offset: 3px; }
  @media (max-width: 640px) {
    .stMainBlockContainer { padding-top: 1.2rem; padding-left: 1rem; padding-right: 1rem; }
@@ -109,10 +107,10 @@ for column, (label, key, value, help_text) in zip(st.columns(3), metric_specs):
 
 
 def chart_style(chart):
+    # Let Streamlit supply readable axis and legend colors for the active theme.
     return chart.configure_view(stroke=None).configure_axis(
-        labelColor=MUTED, titleColor=INK, gridColor="#E6E8E2", labelFontSize=11,
-        titleFontSize=11, domain=False, tickSize=3,
-    ).configure_legend(labelColor=INK, title=None, orient="top")
+        labelFontSize=11, titleFontSize=11, domain=False, tickSize=3,
+    ).configure_legend(title=None, orient="top")
 
 
 st.subheader("Is sales demand changing?")
@@ -126,7 +124,7 @@ trend = alt.Chart(trend_data).mark_line(point=alt.OverlayMarkDef(size=20), strok
     tooltip=[alt.Tooltip("period:N", title="Period"), alt.Tooltip("source_date:T", title="Actual date", format="%d %b %Y"),
              alt.Tooltip("revenue_usd:Q", title="Sales (USD)", format="$,.2f")],
 ).properties(height=235, description="Daily revenue for the selected store, with the preceding period aligned by day when fully available.")
-st.altair_chart(chart_style(trend), width="stretch", theme=None)
+st.altair_chart(chart_style(trend), width="stretch", theme="streamlit")
 st.caption("The dashed comparison is aligned by day within the period; its actual date appears on hover. Equal 28-day windows keep weekday counts comparable.")
 
 st.subheader("When should preparation be ready?")
@@ -142,7 +140,7 @@ heatmap = alt.Chart(heatmap_data).mark_rect(cornerRadius=2, stroke="#FCFBF8", st
              alt.Tooltip("observed_days:Q", title="Observed dates", format="d"),
              alt.Tooltip("availability:N", title="Coverage")],
 ).properties(height=245, description="Weekday-by-hour heatmap of average freshly prepared drink units. Grey means unavailable, not zero demand.")
-st.altair_chart(chart_style(heatmap), width="stretch", theme=None)
+st.altair_chart(chart_style(heatmap), width="stretch", theme="streamlit")
 st.caption("Each cell divides drink units by observed dates of that weekday, including dates with zero drinks at that hour. Grey = no matching dates or outside the store’s observed hour range. Recorded hours are not confirmed opening hours.")
 
 drinks_by_hour = current.loc[current.is_drink].groupby("hour").transaction_qty.sum()
