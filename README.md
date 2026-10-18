@@ -1,5 +1,7 @@
 # Coffee — Next-day Category Preparation
 
+**Team:** team9
+
 [Open the dashboard](https://coffeesales-ws5pwjhzvkr3wg2juzkxip.streamlit.app/) · [GitHub repository](https://github.com/ExactValid/Coffee_Sales)
 
 The replenishment manager closes today's sales, checks what remains usable, and decides **which categories to prepare or replenish for tomorrow, and how many sale units to have ready**. The central output is a category plan, followed by recent category sales and the next-day forecast. It supports one store and one next-day decision at a time.
@@ -155,4 +157,4 @@ Community Cloud may put an app to sleep after 12 hours without traffic. If the s
 
 The separate local `phone-trade-in.ipynb` is complete: 19 executed code cells, 43 saved outputs, 4 figure groups and Q1–Q12 immediately after their supporting code. The phone dataset, notebook outputs and models are unchanged by this dashboard redesign. On the specified 1,000-phone test sample, the best random forest has RMSE **USD 55.19** and R² **0.9078**; its best tested 75% offer buys **568 phones** for simulated gross profit **USD 5,700.76**, before operating costs. Those are Part 2 results, not a model for coffee sales.
 
-For Assignment 4, upload **`phone-trade-in.ipynb`** with its saved outputs to Canvas. The first Markdown cell contains the app and repository links. The phone notebook and CSV remain in the local assignment folder; the Coffee app repository contains this dashboard, its EDA, tests and environment files. Confirm individual account ownership, actual team name, exact Kaggle download source and the README rationale in your own words before submission. `Coffee Operations Team` remains the working name until the actual team name is supplied.
+For Assignment 4, upload **`phone-trade-in.ipynb`** with its saved outputs to Canvas. The first Markdown cell contains the app and repository links. The phone notebook and CSV remain in the local assignment folder; the Coffee app repository contains this dashboard, its EDA, tests and environment files. The project team is **team9**. Confirm individual account ownership, exact Kaggle download source and the README rationale in your own words before submission.

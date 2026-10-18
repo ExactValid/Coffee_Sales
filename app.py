@@ -9,11 +9,11 @@ import streamlit as st
 
 from coffee_data import category_daily_units, forecast_categories, load_sales, make_stock_plan
 
-TEAM_NAME = "Coffee Operations Team"  # Replace with the actual course team name.
+TEAM_NAME = "team9"
 DATA_PATH = Path(__file__).resolve().parent / "Coffee Shop Sales.csv"
 TEAL, AMBER = "#27634F", "#A9662D"
 
-st.set_page_config(page_title="Coffee · Next-day prep", page_icon="☕", layout="wide")
+st.set_page_config(page_title=f"{TEAM_NAME} · Next-day prep", page_icon="☕", layout="wide")
 st.markdown("""
 <style>
  :root {
