@@ -67,6 +67,8 @@ The executed Coffee EDA is in `Preprocessing.ipynb`. The forecast is separately 
 
 Confirmed additions appear first, followed by outstanding stock checks and categories covered by usable stock. The main desktop view uses a table. On narrow screens, the plan becomes category rows with the ready target and action visible without horizontal table scrolling. Forecast methods and data-quality notes are expandable so the main view stays focused on quantities and actions.
 
+The warm neutral background and restrained green accents keep attention on the quantities. Ready targets have a highlighted column; text labels distinguish stock checks, positive additions and covered categories without relying on color alone. A sortable version of the plan remains available in an expander, while the trend panel separates the recorded sales line from the amber next-day forecast.
+
 ### What we deliberately leave out
 
 1. **Revenue headline and daily revenue chart.** Sales value does not directly say how many units should be prepared; price and product mix can change revenue.
