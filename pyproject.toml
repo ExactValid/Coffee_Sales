@@ -1,0 +1,14 @@
+[project]
+name = "assignment4"
+version = "0.1.0"
+description = "Assignment 4: coffee dashboard and phone trade-in pricing"
+readme = "README.md"
+requires-python = ">=3.11,<3.15"
+dependencies = [
+    "altair==6.2.2",
+    "pandas==3.0.5",
+    "streamlit==1.63.0",
+]
+
+[dependency-groups]
+notebook = ["ipykernel>=6,<8", "matplotlib>=3.10,<4", "scikit-learn>=1.9,<2"]

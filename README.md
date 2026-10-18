@@ -1,138 +1,156 @@
-# Coffee Store Planning — Assignment 4
+# Coffee — Next-day Category Preparation
 
-[Open the Streamlit dashboard](https://coffeesales-ws5pwjhzvkr3wg2juzkxip.streamlit.app/) · [GitHub repository](https://github.com/ExactValid/Coffee_Sales)
+[Open the dashboard](https://coffeesales-ws5pwjhzvkr3wg2juzkxip.streamlit.app/) · [GitHub repository](https://github.com/ExactValid/Coffee_Sales)
 
-This dashboard helps the manager of one coffee store decide when to prepare more drinks and review shift coverage. It keeps the decision visible through **three headline metrics, two charts and two filters**. The sections below explain the dataset, the business decision, the content choices and the planned refresh process required by the course.
+The replenishment manager closes today's sales, checks what remains usable, and decides **which categories to prepare or replenish for tomorrow, and how many sale units to have ready**. The central output is a category plan, followed by recent category sales and the next-day forecast. It supports one store and one next-day decision at a time.
 
-The published application consists of `app.py`, `coffee_data.py` and `Coffee Shop Sales.csv`. The complete local assignment also contains the Coffee EDA, phone-pricing notebook, tests and locked environment files; those additional files are not currently published here. Part 2 is submitted separately through Canvas.
+**Historical demonstration:** the source ends on **30 June 2023**. The default plan is for **1 July 2023**, using sales known at the close of 30 June. “Tomorrow” always means the day after the selected cutoff, not the visitor's current calendar date. The app does not have a live inventory or point-of-sale connection.
 
-## Step 1: Dataset and decision-maker
+## Step 1 — Dataset and decision-maker
 
-**Dataset:** Coffee Shop Sales. [Kaggle mirror](https://www.kaggle.com/datasets/ahmedabbas757/coffee-sales); [original Maven Analytics description](https://mavenanalytics.io/data-playground/coffee-shop-sales).
+**Dataset:** Coffee Shop Sales, with 149,116 sales records and 11 original columns, approximately 13.33 MB. It covers 1 January–30 June 2023 at three New York City stores. Sources: [Kaggle mirror](https://www.kaggle.com/datasets/ahmedabbas757/coffee-sales) and [original Maven Analytics description](https://mavenanalytics.io/data-playground/coffee-shop-sales). Maven Roasters is a fictitious business; these findings do not establish real-store demand.
 
-Maven describes transaction records for Maven Roasters, a **fictitious coffee business with three New York City locations**. Treat it as simulated business data rather than verified observations from real stores. The local file has 149,116 rows, 11 original columns and a size of about 13.33 MB. It covers 1 January through 30 June 2023, with sales on all 181 dates at each of three stores. No sampling or aggregation of the source file was necessary to meet the approximately 25 MB course guideline.
+One row records a product, quantity, store and timestamp. The plan sums **transaction_qty**, rather than counting rows or dividing revenue by a typical price. The file has no complete receipt or customer identifier, so rows are not treated as customers or complete orders.
 
-One row identifies one product sold at a store and timestamp, with its quantity and unit price. Although the identifier is called `transaction_id`, there is no receipt or customer identifier. Therefore, row counts are called **sales records**, not customers or receipt-level orders. A mean row amount is not called average order value.
+The nine recorded categories are Coffee, Tea, Bakery, Drinking Chocolate, Flavours, Coffee beans, Branded, Loose Tea and Packaged Chocolate. A unit means the source's **sale unit within that category**. Categories contain different products, sizes or pack formats. Counts are not added into one total inventory number, and a category quantity does not specify its product mix.
 
-**One decision-maker:** the manager of one store. The selector lets the classroom demonstration show any of the three stores; each real manager would open their assigned store by default.
+**Decision-maker:** the replenishment/preparation manager of one store, reviewing the dashboard **after the day's sales are complete and before the next-day ordering or preparation cutoff**. The store selector supports the three-store classroom demonstration; each manager makes the plan for their own store.
 
-## Step 2: Why this dashboard exists
+## Step 2 — The business decision
 
-**Who and how often?** The store manager checks it before opening for preparation and reviews it each week before planning the next week's shifts and preparation tasks.
+**Decision sentence:** If the manager sees that tomorrow's category preparation target exceeds the stock that will still be usable, they will prepare or replenish the difference, after checking the forecast's recent errors and local circumstances.
 
-**Decision sentence:** If the manager sees sustained growth in freshly prepared drink demand during an hour of the day, they will move preparation and ingredient checks ahead of that hour and review how existing staff are allocated around the peak. Demand is a workload proxy, not a calculation of required headcount.
+This project focuses on **how much of each category to have available tomorrow**. The manager enters usable carryover, including only items that will remain fit for sale. For drinks, they enter the serving-equivalent portions supported by ingredients on hand, using their own recipe conversion; this is not a recommendation to make all drinks in advance.
 
-**What happens without it?** Our business assumption is that the manager exports raw sales and manually summarizes hours, or relies on experience. This can consume preparation time or miss a changing peak. The dataset cannot establish the current process or quantify time saved, labor savings, queues or lost sales, so those are not presented as measured benefits.
+The daily workflow is:
 
-**Why a dashboard?** The same person repeatedly asks the same questions and needs to switch dates and inspect the relevant time slots. A one-off report becomes stale; a weekly email cannot provide the same filtering. A production alert could supplement the dashboard for a particular exception, but does not replace the manager's weekly review.
+1. Select the store and the date through which all sales have been recorded.
+2. Review the category forecasts and ready targets in the central plan.
+3. Enter usable stock; leave quantities that have not been checked blank.
+4. Review positive additions, the category's recent sales and its forecast errors.
+5. Translate category targets into specific products, recipes and supplier packs, then download and approve the plan.
 
-## Step 3: EDA, choices and ordering
+The app keeps these quantities distinct:
 
-The local `Preprocessing.ipynb` contains the executed Pandas/Matplotlib EDA with tables and figures; that notebook is not currently published in this repository. It includes shape, types, missing values, duplicates, distributions, mapping checks, date coverage, price variation and time/product relationships.
+- **Expected sales:** the next-day category demand estimate, shown rounded to a whole sale unit.
+- **Ready target:** `ceiling(unrounded forecast × (1 + manager buffer))`.
+- **Prepare / add:** `max(0, ready target − entered usable stock)`.
 
-### Findings that shaped the design
+An unknown inventory balance produces a **stock-check action and a blank addition**, not an assumed zero. Entering zero explicitly means the manager checked and found none. Stock above the target results in zero additions, never a negative order. Entries are temporary in the browser session and are kept separate for each store/cutoff; download the plan to retain them. Do not enter sensitive operational information into this public coursework demo.
 
-- June sales revenue is 103.8% above January, while sales records are up 104.2% and mean row value changes by only about -0.17%. Volume growth deserves attention.
-- February total revenue is down 6.77% month over month, but daily average revenue is up 3.21%. Unequal month lengths can mislead.
-- 08:00–10:59 accounts for about 36.2% of all-product sales records. Fresh-drink demand curves differ between stores, so the dashboard focuses on one store at a time.
-- After adjusting for calendar counts, the busiest and quietest weekdays differ by only about 2.87% in daily sales records. Weekday totals should not be exaggerated.
-- Coffee and Tea contribute about 66.7% of revenue. However, income contribution and preparation workload answer different questions.
-- Highest versus lowest store revenue differs by only about 2.81%. A store leaderboard would distract from more useful operational variation.
+**Why a dashboard?** The manager repeats this decision every day, needs to compare categories, and must change the usable-stock input before seeing the final additions. A static report would not recalculate that decision. Without the tool, our assumed alternative is a manual category sales summary plus a stock check; the dataset does not establish the actual current process or measure time saved.
 
-### What we show
+**Business trade-off:** a larger target may reduce the risk of insufficient preparation, but can increase excess stock and spoilage. The default **10% buffer**, adjustable from 0% to 30%, is a visible manager assumption. It is not an optimized order policy or a measured service level because costs, shelf lives and stockout records are absent.
 
-| Element | Definition | Why it is present |
-|---|---|---|
-| Sales revenue | Sum of quantity × actual unit price, in USD assumed from the NYC context | Overall recorded business activity; not profit |
-| Freshly prepared drinks | Units in Coffee, Tea and Drinking Chocolate | Preparation workload proxy, excluding beans, merchandise and syrups |
-| Sales records | Number of source rows | Another view of sales activity; not customer or complete order count |
-| Daily revenue trend | Daily selected revenue; preceding equal-length period aligned by day | Show whether a change persists across dates |
-| Weekday × hour heatmap | Drink units divided by observed dates of each weekday | Locate the hours needing preparation attention |
-| Store and date filters | One store and one date range | The minimum controls needed for the decision |
+## Step 3 — Evidence, presentation and deliberate cuts
 
-The default window is the latest 28 complete dates in this snapshot: **3–30 June 2023**, compared with **6 May–2 June 2023**. Both contain four occurrences of every weekday. Arbitrary date ranges are allowed, with a caption when weekday mixes differ. Metrics omit change percentages when either period lacks full store-date coverage, or when the baseline is zero. Dates without any store records are unavailable and not automatically treated as zero sales. The historical snapshot does not indicate what is happening today.
+### Findings that shaped the page
 
-The heatmap divides by observed **calendar dates**, including dates with no drink sales at an hour, not by dates with purchases of that drink. Weekdays absent from the filter, and hours outside that store's full-source observed hour range, are grey and unavailable. A zero within observed hours remains a zero. Neither the observed hour range nor an absent store-date is independent evidence of opening hours or closure.
+- All three stores have records on the source's 181 dates, permitting daily category histories. A category with no sales on a recorded store-day contributes zero; a missing store-day remains unavailable.
+- Coffee and Tea dominate recorded sale units (89,250 and 69,737 across the full source); Bakery contributes 23,214. Category-level preparation makes the differences actionable without assuming identical ingredient needs.
+- June revenue exceeds January by 103.8%, while records rise by 104.2%. The plan therefore uses recent category quantities rather than a fixed average across all six months.
+- After accounting for calendar counts, all-product daily record counts differ by only about 2.87% between the busiest and quietest weekday. This does not prove every category lacks a weekday pattern; both recent averages and matching-weekday approaches are checked.
+- Sparse categories can be difficult to forecast in percentage terms even when the absolute miss is only a few units. The page shows the average miss in **that category's units**, instead of claiming one accuracy score for unlike products.
 
-### What we deliberately cut
+The executed Coffee EDA is in `Preprocessing.ipynb`. The forecast is separately checked on chronological daily observations rather than selecting a model by looking at tomorrow's outcome.
 
-1. **Top-ten product rankings.** Useful for a separate assortment analysis, but they do not directly locate preparation times and would add a third supporting chart.
-2. **Weekday share pie charts.** They hide changes over time and unadjusted totals depend on weekday counts. The heatmap better answers the chosen operational question.
+### What the manager sees, and why
 
-We also avoid customer retention, average order value, profit, inventory alerts and staffing-efficiency metrics because the required identifiers or denominators are absent.
+| Element | Definition and purpose |
+|---|---|
+| Central category plan | Expected sales, ready target, entered usable stock, additions and the next action for every category. This directly answers the end-of-day decision. |
+| Three compact headline metrics | Categories in the plan, usable-stock checks still pending, and categories with confirmed positive additions. Unknown inventory is never reported as a confirmed zero shortfall. |
+| Category trend and forecast | The last 28 recorded days, next-day forecast and illustrative recent-error range; inspect one category at a time for readability. |
+| Store and sales-through date | Define whose plan is being made and the information available at that close. |
+| Manager's buffer and usable-stock editor | Explicit planning inputs that change ready targets and additions; they do not change the demand forecast. |
+| Downloadable plan | Preserves the cutoff, forecast date, store, quantities, errors, selected method and assumptions for review. |
 
-### Page order
+Confirmed additions appear first, followed by outstanding stock checks and categories covered by usable stock. The main desktop view uses a table. On narrow screens, the plan becomes category rows with the ready target and action visible without horizontal table scrolling. Forecast methods and data-quality notes are expandable so the main view stays focused on quantities and actions.
 
-The top identifies the team, decision-maker, store and period, then shows the three metrics in `st.columns` with `st.metric`. The daily trend explains the change first; the heatmap then locates preparation slots. Supporting chart data and data-quality notes are collapsed at the bottom. The snapshot period and planned refresh frequency remain visible. This order prioritizes a quick scan before detail; there are exactly two charts.
+### What we deliberately leave out
 
-### Cleaning and misleading data
+1. **Revenue headline and daily revenue chart.** Sales value does not directly say how many units should be prepared; price and product mix can change revenue.
+2. **Weekday-by-hour heatmap and staffing suggestions.** They address intraday readiness and shift planning, while this manager is setting category quantities for the next day.
+3. **Store league tables and a long list of product rankings.** These add comparisons that do not finish the selected store's category plan.
 
-- No missing values or repeated transaction IDs were found. The app validates required columns, positive integer quantities/IDs, prices, explicit `MM/DD/YY` dates, times and identifier mappings; invalid source replacements produce a clear error instead of silently dropping rows.
-- 1,952 trailing spaces in Scottish Cream Scone were removed. Original records remain in the CSV; cleaning occurs in memory.
-- 398 additional rows have identical business fields but different IDs. They are kept and disclosed because the dataset cannot prove an error.
-- 15 products have multiple prices. Revenue uses each row's actual price, not a fixed product price. Variation is not automatically labeled a promotion.
-- Large coffee-bean purchases are retained. The maximum row amount of $360 equals 8 × $45; an IQR flag alone is insufficient to delete it.
-- Money is calculated in integer cents before display. USD is an explicit context assumption; the CSV contains no currency or time-zone field.
-- Six months cannot establish annual seasonality, causality, service quality or optimal staffing. Source completeness within each observed date is not proven merely because all dates appear.
+The app also avoids profit, savings, retention, automatic supplier orders and claims about reduced waste. Those outcomes require information or intervention evidence the CSV does not contain. Product-level allocation and ingredient purchasing are future extensions, not hidden capabilities of a category forecast.
 
-## Step 4: Refresh, review and action
+### Cleaning and safeguards
 
-**Refresh:** in production, load the completed day's point-of-sale records nightly after closing, ready before the next opening. Preparation and weekly assignments do not require a live refresh every minute. This demonstration reads a frozen CSV and does not pretend to update automatically. Replacing the CSV invalidates the in-memory load cache via the file modification timestamp; that cache is not a production data pipeline.
+- The original CSV is preserved. All 149,116 records are retained.
+- No missing values or repeated transaction IDs were found. Required fields, positive integer IDs/quantities, prices, dates, times and product/store mappings are validated; invalid replacements stop with an explanation.
+- 1,952 labels have trailing spaces removed in memory. The 398 additional records with identical business fields but different IDs remain because they cannot be established as errors.
+- Fifteen products have multiple observed prices, and high-value bean purchases are retained. Neither fact is a reason to remove sale quantities.
+- A plan requires **56 consecutive recorded store-days**. A missing day is not filled with zero demand. Category absence on an otherwise recorded day is assumed to be zero recorded sales, which does not prove complete source coverage.
+- Forecasts stop at the selected cutoff. Later rows and newly appearing future categories cannot change a historical plan.
+- Recorded sales may be constrained by stockouts; the data cannot distinguish unmet demand from genuinely low interest. It has no verified opening schedule, currency field, recipes, stock balances, spoilage, lead times, weather, promotions or holiday annotations.
 
-**Review:** brief daily review before opening; a fuller review during weekly planning. Refresh frequency and review frequency serve different purposes.
+### Forecast approach and separate review
 
-**Track and act:** compare an hour's average freshly prepared drink units over the latest complete four weeks with the preceding four weeks. As an initial business discussion threshold, growth greater than 20% on two consecutive weekly reviews would prompt a check of preparation and staff allocation. This threshold is uncalibrated, not a statistical significance test or an optimal policy. It is documented rather than implemented as an automatic alert, because the CSV has no continuing history of weekly review decisions.
+For each category, the following candidates are defined before reviewing performance:
 
-**Cost of stale data:** a week-old view can miss increased demand or a shifted peak and leave preparation mismatched to demand. Queue times and financial losses cannot be estimated from this dataset. Inventory on hand and service-level monitoring would require additional sources.
+1. Average quantity over the preceding **7 days**.
+2. Average quantity on the preceding **4 matching weekdays** (lags 7, 14, 21 and 28 days).
+3. The matching-weekday average multiplied by the preceding 7-day average divided by the previous 7-day average. The multiplier is limited to **0.5–1.5**; when the earlier average is zero, it is set to 1. These limits are fixed safeguards, not tuned on the review window.
 
-## Part 2 — Phone trade-in analysis (Canvas notebook)
+At each cutoff, the earlier **14 daily forecast checks** select the lowest-mean-absolute-error candidate for each category. That selection is fixed before evaluating the following **14 days**. Each rolling check forecasts one day using only earlier observations, including earlier review days once they have actually occurred. The selected rule then produces the next-day forecast using all information available at the close. No random train/test split is used for this time-dependent task.
 
-The separately submitted `phone-trade-in.ipynb` contains the full workflow and every numbered answer immediately after its supporting code. All **19 code cells** were executed in order under Python 3.14.3, yielding **43 saved outputs**, including **4 figure groups**, with no code errors. The supplied CSV was unchanged.
+At the default cutoff, selection dates are **3–16 June 2023**, and separate review dates are **17–30 June 2023**. The app reports the category's mean absolute miss over that later window. Fourteen checks are a small, local evaluation; they do not establish future reliability under promotions, holidays or changed demand.
 
-The specified split gives 4,000 training phones and 1,000 locked test phones (`test_size=0.2`, `random_state=409`). All original predictors except `phone_id` and `resale_price` are retained. Median imputation and scaling for numerical features, and mode imputation and one-hot encoding for categorical features, are fitted inside each pipeline and cross-validation fold. All parameter choices use five-fold training-only CV; the final test predictions and accuracy scores are calculated once and reused for interpretation and profit scenarios.
+The displayed **planning range** adds the 10th and 90th percentiles of the later window's signed errors (`actual − forecast`) to the point forecast, expands the range to include the point, clips the lower end at zero and rounds outward. It is an illustrative recent-error envelope, **not a calibrated 80% prediction interval or a service-level guarantee**. The separate manager buffer is not derived from this range.
 
-| Method | Test RMSE (USD) | Test MAE (USD) | Test R² |
-| --- | --- | --- | --- |
-| Baseline | 181.81 | 137.53 | -0.000009 |
-| Linear regression | 98.01 | 71.35 | 0.709397 |
-| SGD | 97.91 | 71.61 | 0.709970 |
-| Random forest | 55.19 | 33.21 | 0.907832 |
+The use of simple benchmarks and chronological rolling evaluation follows the principles in [Forecasting: Principles and Practice, Chapter 5](https://otexts.com/fpp3/toolbox.html). The specific candidates, date windows and stock formulas above are this project's implementation choices.
 
-The searches select SGD `eta0=0.01`, `max_iter=10000`, `tol=1e-5`, and a random forest with **150 trees and depth 10**. At the best of the seven tested forest offer rates, **75%**, the simulation buys **568 out of 1,000 quoted phones** for **USD 5,700.76 total gross profit**. Linear regression has R² of 0.7094 but loses USD 6,876.72 at a 75% offer, mainly in the 3–4-year age groups. The notebook explains why prediction accuracy and trading profit differ.
+### Default example — Lower Manhattan, plan for 1 July 2023
 
-Profits exclude repair, inspection, shipping, returns and other operating costs. The data and seller-acceptance rule are simulated. Selecting the offer rate on these same test scenarios is required by the assignment; it is not an independent evaluation of the selected policy. A real deployment would need separate validation. Read and understand Q1–Q12 before submission, and review the Part 1 README rationale in your own words as required by the course.
+Usable stock is initially unknown, so the following are **ready targets**, not finalized additions. With the default 10% buffer:
 
-The phone notebook and its supplied CSV are held in the local assignment folder for Canvas submission; they are not currently included in this Coffee dashboard repository.
+| Category | Forecast sale units | Ready target | Recent-error planning range | Average miss / day, 17–30 Jun |
+|---|---:|---:|---:|---:|
+| Coffee | 222.5 | 245 | 180–316 | 48.6 |
+| Tea | 195.1 | 215 | 150–251 | 34.1 |
+| Bakery | 68.6 | 76 | 49–89 | 13.4 |
+| Drinking Chocolate | 45.7 | 51 | 32–58 | 8.0 |
+| Flavours | 22.8 | 26 | 1–53 | 18.3 |
+| Coffee beans | 4.3 | 5 | 0–9 | 2.6 |
+| Branded | 3.1 | 4 | 0–5 | 1.9 |
+| Loose Tea | 2.1 | 3 | 0–4 | 2.0 |
+| Packaged Chocolate | 1.3 | 2 | 0–3 | 1.1 |
 
-## Run the published dashboard locally
+For example, Coffee's unrounded estimate is **222.5**, yielding a ready target of **245**. If the manager enters **80 usable serving equivalents**, the addition becomes **165**. Its recent average miss is **48.6 units/day**, so the 10% buffer is not a promise of sufficient stock. The chart provides context for the manager's judgment rather than making the order automatically.
 
-Use Python **3.14** for this coursework. With `uv` installed, download this repository and run the following from the folder containing `app.py`:
+## Step 4 — Refresh, review and action
 
-```bash
-uv run --python 3.14 --with streamlit==1.63.0 --with pandas==3.0.5 --with altair==6.2.2 streamlit run app.py
-```
+**Refresh after close:** in production, append the completed day's store/category sales after daily closing, validate completeness, and rebuild the next-day plan before the relevant ordering/preparation cutoff. This demo reads a frozen CSV; replacing it invalidates the load/forecast cache through the file modification timestamp. It has no automatic data ingestion.
 
-Keep `coffee_data.py` and `Coffee Shop Sales.csv` beside `app.py`. The CSV path is resolved relative to the application file, so moving the folder does not require editing a machine-specific path. The dashboard needs no secrets, external database or API.
+**Review daily:** the replenishment manager checks all category targets after close, enters tomorrow-usable stock, inspects unusual category forecasts and reviews positive additions. A weekly review of forecast misses and actual leftovers would inform future adjustments once those records exist.
 
-The complete local assignment also has `pyproject.toml`, `uv.lock`, `.python-version`, `.streamlit/config.toml`, the notebooks and tests. When those supporting files are available in the same project folder, its locked environment can instead be restored with:
+**Action rule:** a category with entered usable stock below its ready target is a candidate to prepare/replenish by the calculated difference. Unchecked stock is an unresolved task; stock at or above target needs no addition under this one-day rule. The manager still checks expiry, capacity, local events, supplier timing and recipe/SKU allocation before approving action. The app does not issue a purchase order.
+
+**Why not a live minute-by-minute refresh?** This decision is made after daily close for the next day. Incomplete intraday totals would understate a full day's demand. A stale close can miss recent changes and produce excess preparation or shortages; this dataset cannot quantify the cost or prove that the dashboard prevents either outcome. Long-lead procurement would need a different horizon and inventory policy.
+
+## Run and verify
+
+Use Python **3.14** for the course. Dependencies are declared in `pyproject.toml` and locked in `uv.lock`; `.python-version` selects the local version.
 
 ```bash
 uv sync --locked --group notebook
 uv run streamlit run app.py
+uv run python -m unittest discover -s tests -v
 ```
 
-The local dashboard/data test suite passed all 10 tests. It covers calendar-normalized demand, unavailable weekdays and hours, exact-cent totals, complete-period comparisons, input validation and Streamlit filter behavior. Those tests are maintained in the local assignment folder rather than this published repository.
+The application resolves its CSV beside `app.py`. No machine-specific data path, secret, API or external database is required. The two Python modules contain the interface and data/forecast/stock calculations. Both cleaned-data helpers and the existing Coffee EDA remain available.
 
-## Deployment and availability
+All **21 tests** pass under Python 3.14. They cover source totals, date/quantity validation, missing store-days, zero category sales on observed days, cutoff leakage, separation of method selection and later review, unknown/zero/excess usable stock, invalid inputs, store/date/category interactions, changing the buffer, and a stock edit updating additions.
 
-The app is deployed from this repository with **`app.py`** as the entry point. To recreate the full course deployment, also publish the dependency and environment files from the local assignment folder, then explicitly select **Python 3.14** in Streamlit Community Cloud's advanced deployment settings. A local `.python-version` file does not replace the Cloud setting. See [deployment settings](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy) and [dependency handling](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/app-dependencies).
+## Streamlit deployment and availability
 
-If deployment reports `No module named 'coffee_data'`, check that `coffee_data.py` was committed beside `app.py`; it is a local module. The CSV must also be present. The app's metric and chart colors follow the active Streamlit theme.
+Deploy this public repository using **`app.py`** as the main file. Keep `coffee_data.py`, `Coffee Shop Sales.csv`, `pyproject.toml`, `uv.lock`, `.python-version` and the root `.streamlit/config.toml` with it. In Streamlit Community Cloud's advanced settings, explicitly select **Python 3.14** for the course; the local version file does not replace that setting. See [deployment settings](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy) and [dependency handling](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/app-dependencies).
 
-**If the app is sleeping:** Community Cloud hibernates apps after 12 hours without traffic. Click **“Yes, get this app back up!”** and wait for the dashboard to load. Any visitor with viewing access can wake it. This hosting behavior is separate from the data refresh policy: the dashboard remains a historical January–June 2023 snapshot. See [Streamlit's official hibernation explanation](https://docs.streamlit.io/deploy/streamlit-community-cloud/manage-your-app#app-hibernation).
+Community Cloud may put an app to sleep after 12 hours without traffic. If the sleep page appears, click **“Yes, get this app back up!”** and wait for the dashboard. This hosting behavior is separate from the historical data cutoff and intended daily data refresh. See [official hibernation guidance](https://docs.streamlit.io/deploy/streamlit-community-cloud/manage-your-app#app-hibernation).
 
-## Assignment submission
+## Part 2 and Canvas submission
 
-Upload **`phone-trade-in.ipynb`** to Canvas with its saved outputs. Its first Markdown cell contains the deployed app URL and GitHub repository URL. The repository and Streamlit deployment must be under the student's own accounts, and the README design rationale must be reviewed and expressed in the student's own words, as required by the assignment.
+The separate local `phone-trade-in.ipynb` is complete: 19 executed code cells, 43 saved outputs, 4 figure groups and Q1–Q12 immediately after their supporting code. The phone dataset, notebook outputs and models are unchanged by this dashboard redesign. On the specified 1,000-phone test sample, the best random forest has RMSE **USD 55.19** and R² **0.9078**; its best tested 75% offer buys **568 phones** for simulated gross profit **USD 5,700.76**, before operating costs. Those are Part 2 results, not a model for coffee sales.
 
-Before submission, confirm the team name displayed by the app (`Coffee Operations Team` is the current working name), the exact Kaggle mirror used for the download, public access to the app, and both links in the notebook. All Part 2 code outputs and numbered answers have already been saved in the local notebook.
+For Assignment 4, upload **`phone-trade-in.ipynb`** with its saved outputs to Canvas. The first Markdown cell contains the app and repository links. The phone notebook and CSV remain in the local assignment folder; the Coffee app repository contains this dashboard, its EDA, tests and environment files. Confirm individual account ownership, actual team name, exact Kaggle download source and the README rationale in your own words before submission. `Coffee Operations Team` remains the working name until the actual team name is supplied.
