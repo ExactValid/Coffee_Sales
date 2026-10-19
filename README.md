@@ -1,12 +1,12 @@
-# Coffee — Next-day Category Preparation
+# Coffee — Store Manager’s Desk
 
 **Team:** team9
 
 [Open the dashboard](https://coffeesales-ws5pwjhzvkr3wg2juzkxip.streamlit.app/) · [GitHub repository](https://github.com/ExactValid/Coffee_Sales)
 
-The replenishment manager closes today's sales, checks what remains usable, and decides **which categories to prepare or replenish for tomorrow, and how many sale units to have ready**. The central output is a category plan, followed by recent category sales and the next-day forecast. It supports one store and one next-day decision at a time.
+The store manager uses **Today’s To-do** to compare the last completed day’s category sales with the next-day forecast, check usable stock, and decide **what to prepare or replenish, and how many sale units to have ready**. Three pages separate the daily action from supporting analysis: **Today’s To-do**, **Sales review**, and **Forecast & data**. Each page serves one selected store and planning date.
 
-**Historical demonstration:** the source ends on **30 June 2023**. The default plan is for **1 July 2023**, using sales known at the close of 30 June. “Tomorrow” always means the day after the selected cutoff, not the visitor's current calendar date. The app does not have a live inventory or point-of-sale connection.
+**Historical demonstration:** the source ends on **30 June 2023**. The default plan is for **1 July 2023**, using sales known at the close of 30 June. On the interface, **yesterday** means the selected completed sales day and **today** means the following planning day. Thus the default home page compares yesterday’s 30 June sales with a plan for today, 1 July 2023; these labels do not refer to the visitor’s current calendar date. The app does not have a live inventory or point-of-sale connection.
 
 ## Step 1 — Dataset and decision-maker
 
@@ -16,7 +16,7 @@ One row records a product, quantity, store and timestamp. The plan sums **transa
 
 The nine recorded categories are Coffee, Tea, Bakery, Drinking Chocolate, Flavours, Coffee beans, Branded, Loose Tea and Packaged Chocolate. A unit means the source's **sale unit within that category**. Categories contain different products, sizes or pack formats. Counts are not added into one total inventory number, and a category quantity does not specify its product mix.
 
-**Decision-maker:** the replenishment/preparation manager of one store, reviewing the dashboard **after the day's sales are complete and before the next-day ordering or preparation cutoff**. The store selector supports the three-store classroom demonstration; each manager makes the plan for their own store.
+**Decision-maker:** the store manager responsible for category preparation of one store, reviewing the dashboard **after the day's sales are complete and before the next-day ordering or preparation cutoff**. The store selector supports the three-store classroom demonstration; each manager makes the plan for their own store.
 
 ## Step 2 — The business decision
 
@@ -26,11 +26,11 @@ This project focuses on **how much of each category to have available tomorrow**
 
 The daily workflow is:
 
-1. Select the store and the date through which all sales have been recorded.
-2. Review the category forecasts and ready targets in the central plan.
-3. Enter usable stock; leave quantities that have not been checked blank.
-4. Review positive additions, the category's recent sales and its forecast errors.
-5. Translate category targets into specific products, recipes and supplier packs, then download and approve the plan.
+1. Select the store and its last completed sales day; the next day is the planning date.
+2. Start on **Today’s To-do**: compare each category’s **Yesterday sold**, **Predicted today**, **Ready target**, **Usable stock**, **Prepare / add**, and next action.
+3. Enter usable stock; leave unchecked quantities blank. Confirmed positive additions rise to the top.
+4. Open **Sales review** for yesterday’s revenue, recorded sale units and sales records versus the day before, plus the last 28 days of category sales and the planning-day forecast. Open **Forecast & data** for recent forecast errors, method selection and data limits.
+5. Return to the To-do page, translate category targets into specific products/recipes/supplier packs, and download the plan. Store, closing date, buffer and entered stock survive page changes within the browser session.
 
 The app keeps these quantities distinct:
 
@@ -60,20 +60,21 @@ The executed Coffee EDA is in `Preprocessing.ipynb`. The forecast is separately 
 
 | Element | Definition and purpose |
 |---|---|
-| Central category plan | Expected sales, ready target, entered usable stock, additions and the next action for every category. This directly answers the end-of-day decision. |
-| Three compact headline metrics | Categories in the plan, usable-stock checks still pending, and categories with confirmed positive additions. Unknown inventory is never reported as a confirmed zero shortfall. |
-| Category trend and forecast | The last 28 recorded days, next-day forecast and illustrative recent-error range; inspect one category at a time for readability. |
+| Today’s To-do: category plan | Yesterday’s actual sale units, today’s forecast, buffered ready target, usable stock, additions and next action. This is the default page and directly supports preparation. |
+| To-do headline metrics | At most three: categories planned, stock checks left, and categories with confirmed positive additions. Unknown inventory is never reported as a confirmed zero shortfall. |
+| Sales review | Three separate review metrics—yesterday’s revenue, recorded sale units and sales records—with day-before changes. One supporting chart shows the last 28 recorded days, planning-day forecast and illustrative recent-error range for one category. |
+| Forecast & data | Category error table, selected approaches, stock/forecast formulas and limitations. This evidence remains available without extending the daily To-do page. |
 | Store and sales-through date | Define whose plan is being made and the information available at that close. |
 | Manager's buffer and usable-stock editor | Explicit planning inputs that change ready targets and additions; they do not change the demand forecast. |
 | Downloadable plan | Preserves the cutoff, forecast date, store, quantities, errors, selected method and assumptions for review. |
 
-Confirmed additions appear first, followed by outstanding stock checks and categories covered by usable stock. The main desktop view uses a table. On narrow screens, the plan becomes category rows with the ready target and action visible without horizontal table scrolling. Forecast methods and data-quality notes are expandable so the main view stays focused on quantities and actions.
+Confirmed additions appear first, followed by outstanding stock checks and categories covered by usable stock. The home page uses a desktop table; narrow screens use category cards showing yesterday’s sales, today’s prediction, the ready target and addition/action without horizontal table scrolling. Supporting sales analysis and forecast/data notes have their own pages rather than sitting below the entire To-do list. A native top navigation menu gives each secondary page its own URL (`/sales` and `/forecast`); only the selected page’s content is rendered. The app remains in `app.py`, with no extra page files or dependencies. Shared filters and separate session stock storage prevent page navigation from discarding manager inputs. See [Streamlit navigation](https://docs.streamlit.io/develop/api-reference/navigation/st.navigation) and [cross-page widget state](https://docs.streamlit.io/develop/concepts/multipage-apps/widgets).
 
 The warm neutral background and restrained green accents keep attention on the quantities. Ready targets have a highlighted column; text labels distinguish stock checks, positive additions and covered categories without relying on color alone. A sortable version of the plan remains available in an expander, while the trend panel separates the recorded sales line from the amber next-day forecast.
 
 ### What we deliberately leave out
 
-1. **Revenue headline and daily revenue chart.** Sales value does not directly say how many units should be prepared; price and product mix can change revenue.
+1. **Revenue as a home-page headline and a daily revenue chart.** Revenue cannot determine preparation units because prices and product mix change it. Yesterday’s revenue is available as secondary context on Sales review, while the To-do page stays focused on category quantities and unresolved stock checks.
 2. **Weekday-by-hour heatmap and staffing suggestions.** They address intraday readiness and shift planning, while this manager is setting category quantities for the next day.
 3. **Store league tables and a long list of product rankings.** These add comparisons that do not finish the selected store's category plan.
 
@@ -127,7 +128,7 @@ For example, Coffee's unrounded estimate is **222.5**, yielding a ready target o
 
 **Refresh after close:** in production, append the completed day's store/category sales after daily closing, validate completeness, and rebuild the next-day plan before the relevant ordering/preparation cutoff. This demo reads a frozen CSV; replacing it invalidates the load/forecast cache through the file modification timestamp. It has no automatic data ingestion.
 
-**Review daily:** the replenishment manager checks all category targets after close, enters tomorrow-usable stock, inspects unusual category forecasts and reviews positive additions. A weekly review of forecast misses and actual leftovers would inform future adjustments once those records exist.
+**Review daily:** the store manager checks all category targets after close, enters tomorrow-usable stock, inspects unusual category forecasts and reviews positive additions. A weekly review of forecast misses and actual leftovers would inform future adjustments once those records exist.
 
 **Action rule:** a category with entered usable stock below its ready target is a candidate to prepare/replenish by the calculated difference. Unchecked stock is an unresolved task; stock at or above target needs no addition under this one-day rule. The manager still checks expiry, capacity, local events, supplier timing and recipe/SKU allocation before approving action. The app does not issue a purchase order.
 
@@ -145,7 +146,7 @@ uv run python -m unittest discover -s tests -v
 
 The application resolves its CSV beside `app.py`. No machine-specific data path, secret, API or external database is required. The two Python modules contain the interface and data/forecast/stock calculations. Both cleaned-data helpers and the existing Coffee EDA remain available.
 
-All **21 tests** pass under Python 3.14. They cover source totals, date/quantity validation, missing store-days, zero category sales on observed days, cutoff leakage, separation of method selection and later review, unknown/zero/excess usable stock, invalid inputs, store/date/category interactions, changing the buffer, and a stock edit updating additions.
+All **25 tests** pass under Python 3.14. They cover source totals, date/quantity validation, missing store-days, zero category sales on observed days, cutoff leakage, separation of method selection and later review, unknown/zero/excess usable stock, invalid inputs, store/date/category interactions, changing the buffer, a stock edit updating additions, recorded yesterday-sales reconciliation, separate page content, persistence of stock/filters across navigation, and rejecting fractional usable stock without silently truncating it.
 
 ## Streamlit deployment and availability
 
