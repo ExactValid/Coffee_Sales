@@ -138,7 +138,7 @@ def cached_forecast(path, modified_ns, store_name, cutoff):
 
 st.markdown('<div class="desk-brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 8h13v6a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6V8Z"/><path d="M17 9h2a3 3 0 0 1 0 6h-2M8 2v3m4-3v3M3 23h16"/></svg> Coffee / Operations desk</div>', unsafe_allow_html=True)
 st.title(f"{TEAM_NAME} · Next-day prep")
-st.caption("Tomorrow’s category demand, usable stock and preparation quantities — in one closing-day plan.")
+st.caption("For the replenishment manager: decide tomorrow’s category preparation quantities after daily close.")
 try:
     modified_ns = DATA_PATH.stat().st_mtime_ns
     sales = cached_sales(str(DATA_PATH), modified_ns)
@@ -301,3 +301,4 @@ with st.expander("Data quality and limits"):
 
 st.divider()
 st.caption(f"Source: {df.date.min():%d %b %Y}–{df.date.max():%d %b %Y} · Fictitious NYC coffee business · Intended refresh: after daily close; manager review: before the next-day order/prep cutoff. This demo reads a fixed CSV.")
+
