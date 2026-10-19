@@ -44,6 +44,14 @@ An unknown inventory balance produces a **stock-check action and a blank additio
 
 **Business trade-off:** a larger target may reduce the risk of insufficient preparation, but can increase excess stock and spoilage. The default **10% buffer**, adjustable from 0% to 30%, is a visible manager assumption. It is not an optimized order policy or a measured service level because costs, shelf lives and stockout records are absent.
 
+### How the manager's workflow shaped my design
+
+When revising the dashboard, I thought through the store manager's daily workflow. My design assumes that, after the sales day closes, the manager reviews what sold, checks what stock will remain usable, and decides what to prepare for the next service day. The first screen therefore needs to make those preparation tasks easy to identify.
+
+I made **Today's To-do** the home page and placed each category’s sales from yesterday, predicted demand for the planning day, buffered ready target, usable stock and required addition together. This lets the manager follow the decision from recent sales to a concrete preparation quantity. An unchecked stock balance remains an open task, because a demand forecast alone cannot determine how much needs replenishing.
+
+I separated the other information according to when the manager would need it. **Sales review** supports a closer look at yesterday's performance and recent category trends; **Forecast & data** supports checking forecast errors, assumptions and data quality. The manager can open either page when a quantity needs explanation, then return to the To-do list with the same store, date, buffer and entered stock. The page hierarchy follows the workflow I reasoned through for the classroom business scenario.
+
 ## Step 3 — Evidence, presentation and deliberate cuts
 
 ### Findings that shaped the page
